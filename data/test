@@ -1,0 +1,24 @@
+select day from (select day, price as today_price,
+(lag(price) over(order by day)) as previous_day,
+(lead(price) over(order by day)) as next_day
+from prices) tbl
+where tbl.today_price > tbl.previous_day and
+tbl.today_price > tbl.next_day order by day asc;
+
+create table prices (
+      day integer NOT NULL UNIQUE,
+      price integer NOT NULL
+  );
+ create table tasks (
+      id integer not null,
+      name varchar(40) not null,
+      unique(id)
+  );
+
+  create table reports (
+      id integer not null,
+      task_id integer not null,
+      candidate varchar(40) not null,
+      score integer not null,
+      unique(id)
+  );
