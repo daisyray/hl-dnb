@@ -44,7 +44,7 @@ public class UserService {
             if ((user.getSsn() == null) || (user.getSsn().isBlank())) {
                 validationErrors.add("SSN is missing");
             }
-            if (user.getState().length() != 2) {
+            if (user.getStateAbbrev().length() != 2) {
                 validationErrors.add("State abbreviation should only be 2 characters");
             }
             if (user.getPhoneNumber().length() > 25) {
@@ -73,14 +73,38 @@ public class UserService {
     }
     public User getUserWithId(Integer id) {
         String sql = "select * from havenlife.users u where u.id = ?";
-        User rows = jdbcTemplate.queryForObject(sql, User.class);
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql, id);
 
+        if(rows.isEmpty()) {
+            return null;
+        }
+        Map<String,Object> row = rows.get(0);
         User userObj = new User();
-        userObj.setFirstName(Objects.requireNonNull(rows).getFirstName());
-        userObj.setLastName(rows.getLastName());
-        userObj.setSsn(rows.getSsn());
 
+        userObj.setFirstName((String) row.get("first_name"));
+        userObj.setLastName((String) row.get("last_name"));
+        userObj.setSsn((String) row.get("ssn"));
+        userObj.setId((Integer) row.get("id"));
+        userObj.setZip((Integer) row.get("zip"));
+        userObj.setPhoneNumber((String) row.get("phone_number"));
             return userObj;
+    }
+    public List<User> getUserByName(String firstname, String lastName) {
+//        String sql = "select * from havenlife.users u2 where first_name = ? and last_name = ?";
+        String sql = "select * from havenlife.users u2 where first_name like ? or last_name like ?";
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql, firstname+"%", lastName+"%");
+        List<User> users = new ArrayList<>();
+        for(Map<String, Object> row: rows) {
+            User userObj = new User();
+            userObj.setFirstName((String) row.get("first_name"));
+            userObj.setLastName((String) row.get("last_name"));
+            userObj.setSsn((String) row.get("ssn"));
+            userObj.setId((Integer) row.get("id"));
+            userObj.setZip((Integer) row.get("zip"));
+            userObj.setPhoneNumber((String) row.get("phone_number"));
+            users.add(userObj);
+        }
+        return users;
     }
 
     public Integer findUserIdForSsn(String ssn) {
@@ -107,7 +131,7 @@ public class UserService {
             stmt.setDate(i++, Date.valueOf(user.getDateOfBirth()));
             stmt.setString(i++, user.getAddressLine1());
             stmt.setString(i++, user.getAddressLine2());
-            stmt.setString(i++, user.getState());
+            stmt.setString(i++, user.getStateAbbrev());
             stmt.setString(i++, user.getCity());
             stmt.setInt(i++, user.getZip());
             stmt.setString(i++, user.getPhoneNumber());
@@ -142,7 +166,7 @@ public class UserService {
                 userObj.setAddressLine1((String) map.get("address_line1"));
                 userObj.setAddressLine2((String) map.get("address_line2"));
                 userObj.setCity((String) map.get("city"));
-                userObj.setState((String) map.get("state_abbrev"));
+                userObj.setStateAbbrev((String) map.get("state_abbrev"));
                 userObj.setZip((Integer) map.get("zip"));
                 userObj.setRegisterId((Integer) map.get("register_id"));
                 userObj.setPhoneNumber((String) map.get("phone_number"));
@@ -178,7 +202,7 @@ public class UserService {
             stmt.setDate(i++, Date.valueOf(user.getDateOfBirth()));
             stmt.setString(i++, user.getAddressLine1());
             stmt.setString(i++, user.getAddressLine2());
-            stmt.setString(i++, user.getState());
+            stmt.setString(i++, user.getStateAbbrev());
             stmt.setString(i++, user.getCity());
             stmt.setInt(i++, user.getZip());
             stmt.setString(i++, user.getPhoneNumber());

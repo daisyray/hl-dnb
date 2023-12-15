@@ -13,9 +13,9 @@ public class User {
     private String addressLine1;
     private String addressLine2;
     private String city;
-    private String state;
+    private String stateAbbrev;
     private Integer zip;
-    private String PhoneNumber;
+    private String phoneNumber;
     private Integer registerId;
 
     public Integer getRegisterId() {
@@ -97,12 +97,12 @@ public class User {
         this.city = city;
     }
 
-    public String getState() {
-        return state;
+    public String getStateAbbrev() {
+        return stateAbbrev;
     }
 
-    public void setState(String state) {
-        this.state = state;
+    public void setStateAbbrev(String stateAbbrev) {
+        this.stateAbbrev = stateAbbrev;
     }
 
     public Integer getZip() {
@@ -114,11 +114,11 @@ public class User {
     }
 
     public String getPhoneNumber() {
-        return PhoneNumber;
+        return phoneNumber;
     }
 
     public void setPhoneNumber(String phoneNumber) {
-        PhoneNumber = phoneNumber;
+        this.phoneNumber = phoneNumber;
     }
 
     @Override
@@ -133,10 +133,10 @@ public class User {
                 ", addressLine1='" + addressLine1 + '\'' +
                 ", addressLine2='" + addressLine2 + '\'' +
                 ", city='" + city + '\'' +
-                ", state='" + state + '\'' +
+                ", state='" + stateAbbrev + '\'' +
                 ", zip=" + zip +
                 ", registerId='" + registerId + '\'' +
-                ", PhoneNumber='" + PhoneNumber + '\'' +
+                ", PhoneNumber='" + phoneNumber + '\'' +
                 '}';
     }
 }

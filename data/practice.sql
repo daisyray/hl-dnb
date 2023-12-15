@@ -32,3 +32,6 @@ update havenlife.users set date_of_birth = '1967-10-12' where id = 7;
 
 select * from havenlife.users u where lower(first_name) like 'jo%';
 select * from havenlife.users u where first_name like '%o%';
+
+select province_id, sum(height) as sum_height
+from patients group by province_id having sum_height>= 7000;

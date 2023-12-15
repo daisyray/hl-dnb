@@ -22,7 +22,6 @@ import java.util.*;
 public class UsersController {
     @Autowired
     private FileFunctions fileFunctions;
-
     @Autowired
     private ObjectMapper objectMapper;
 
@@ -87,9 +86,15 @@ public class UsersController {
     }
 
     //give an id, get the user
-    @GetMapping(value = "/get-user", produces = MediaType.APPLICATION_JSON_VALUE)
-    public User getUser(@RequestParam(value = "id") Integer id) {
+    @GetMapping(value = "/get-user-id/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public User getUser(@PathVariable(value = "id") Integer id) {
         return userService.getUserWithId(id);
+    }
+    @GetMapping(value="/get-user-name/{fName}/{lastName}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<User> getUserName(@PathVariable(value = "fName") String firstName,
+                            @PathVariable(value = "lastName", required = false) String lastName) {
+        List<User> rows =  userService.getUserByName(firstName, lastName);
+        return rows;
     }
 
     @GetMapping(value = "/login-screen", produces = MediaType.TEXT_HTML_VALUE)
@@ -118,7 +123,7 @@ public class UsersController {
                 "password", password,
                 "errors", errors
             ));
-            return ResponseEntity.ok(content);
+            return ResponseEntity.badRequest().body(content);
         }
     }
 
