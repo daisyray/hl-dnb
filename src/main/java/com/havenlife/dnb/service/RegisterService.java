@@ -1,8 +1,12 @@
 package com.havenlife.dnb.service;
 
 import com.havenlife.dnb.models.Register;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
@@ -10,7 +14,6 @@ import org.springframework.stereotype.Component;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -18,27 +21,39 @@ import java.util.Map;
 public class RegisterService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
+    @Autowired
+    private NamedParameterJdbcTemplate namedJdbcTemplate;
+    private static final Logger logger = LoggerFactory.getLogger(RegisterService.class);
+
 
     public Register newRegister(Register register) {
-        String sql = "insert into havenlife.register ( email, password ) values ( ?, ?)";
         KeyHolder kh = new GeneratedKeyHolder();
         if (!validate(register)) {
             return null;
         }
-        jdbcTemplate.update(con -> {
-            PreparedStatement stmt = con.prepareStatement(sql);
-            stmt.setString(1, register.getEmail());
-            stmt.setString(2, register.getPassword());
-            return stmt;
-        }, kh);
-        Integer generatedId = (Integer) kh.getKey();
-        System.out.println("generated id " + generatedId);
-        Register newRegisterObj = new Register();
-        newRegisterObj.setId(generatedId);
-        newRegisterObj.setEmail(register.getEmail());
-        newRegisterObj.setPassword(register.getPassword());
-        return newRegisterObj ;
+        String email = register.getEmail();
+        String password = register.getPassword();
+        String sqlInsert = "insert into havenlife.register ( email, password ) values ( :emailValue, :pswdValue)";
+
+        try {
+            MapSqlParameterSource sqlParameterSource = new MapSqlParameterSource();
+            sqlParameterSource.addValue("emailValue", email);
+            sqlParameterSource.addValue("pswdValue", password );
+            namedJdbcTemplate.update(sqlInsert, sqlParameterSource, kh, new String[]{"id"});
+
+            Integer id = kh.getKey().intValue();
+            Register newRgtObj = new Register();
+            newRgtObj.setId(id);
+            newRgtObj.setEmail(email);
+            newRgtObj.setPassword(password);
+            return newRgtObj;
+        } catch (Exception e) {
+            String errorMsg = "Failed to create new Register at " + register.getEmail();
+            logger.error(errorMsg, e);
+            return null;
+        }
     }
+
     public List<Register> registerList(Integer limit) {
         String sql = "select * from havenlife.register r order by email limit ?";
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql, limit);

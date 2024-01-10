@@ -12,6 +12,12 @@ public class Application {
     private boolean isSubmitted;
     private LocalDate createdDate;
     private LocalDate updatedDate;
+    private String healthRate;
+    private String profession;
+    private boolean isCitizen;
+    private Integer salary;
+    private boolean hasLicense;
+    private boolean hasCancer;
 
     public Integer getId() {
         return id;
@@ -83,6 +89,54 @@ public class Application {
 
     public void setUpdatedDate(LocalDate updatedDate) {
         this.updatedDate = updatedDate;
+    }
+
+    public String getHealthRate() {
+        return healthRate;
+    }
+
+    public void setHealthRate(String healthRate) {
+        this.healthRate = healthRate;
+    }
+
+    public String getProfession() {
+        return profession;
+    }
+
+    public void setProfession(String profession) {
+        this.profession = profession;
+    }
+
+    public boolean isCitizen() {
+        return isCitizen;
+    }
+
+    public void setCitizen(boolean citizen) {
+        isCitizen = citizen;
+    }
+
+    public Integer getSalary() {
+        return salary;
+    }
+
+    public void setSalary(Integer salary) {
+        this.salary = salary;
+    }
+
+    public boolean isHasLicense() {
+        return hasLicense;
+    }
+
+    public void setHasLicense(boolean hasLicense) {
+        this.hasLicense = hasLicense;
+    }
+
+    public boolean isHasCancer() {
+        return hasCancer;
+    }
+
+    public void setHasCancer(boolean hasCancer) {
+        this.hasCancer = hasCancer;
     }
 
     @Override

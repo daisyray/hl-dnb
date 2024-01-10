@@ -5,6 +5,7 @@ import com.havenlife.dnb.database.FileFunctions;
 import com.havenlife.dnb.models.User;
 import com.havenlife.dnb.models.WebResponse;
 import com.havenlife.dnb.service.FMUtils;
+import com.havenlife.dnb.service.RegisterService;
 import com.havenlife.dnb.service.UserService;
 import net.datafaker.Faker;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.*;
 
 @RequestMapping("/user")
@@ -30,18 +32,40 @@ public class UsersController {
 
     @Autowired
     private FMUtils fm;
+    @PostMapping(value = "/application-step-1", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<WebResponse> createUser(
+        @RequestParam (value = "registerId") Integer registerId,
+        @RequestParam (value = "firstName") String firstName,
+        @RequestParam (value = "lastName") String lastName,
+        @RequestParam (value = "dob") LocalDate dob,
+        @RequestParam (value = "ssn") String ssn,
+        @RequestParam (value = "gender") String gender,
+        @RequestParam (value = "addressline1") String addressLine1,
+        @RequestParam (value = "addressLine2", required = false) String addressLine2,
+        @RequestParam (value = "city") String city,
+        @RequestParam (value = "state") String stateAbv,
+        @RequestParam (value = "zip") Integer zip,
+        @RequestParam (value = "phoneNumber") String phoneNumber) {
 
-    @PostMapping(value = "/create-user", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<WebResponse> createUser(@RequestBody User userBody) {
-        List<String> errors = userService.validate(userBody);
+        User user = new User();
+        user.setFirstName(firstName);
+        user.setRegisterId(registerId);
+        user.setLastName(lastName);
+        user.setDateOfBirth(dob);
+        user.setSsn(ssn);
+        user.setGender(gender);
+        user.setAddressLine1(addressLine1);
+        user.setAddressLine2(addressLine2);
+        user.setCity(city);
+        user.setStateAbbrev(stateAbv);
+        user.setZip(zip);
+        user.setPhoneNumber(phoneNumber);
 
-        if(!errors.isEmpty()) {
-            return ResponseEntity.badRequest().body(new WebResponse(errors));
+        WebResponse webResponse = userService.createUserDB(user);
+        if (webResponse.getId() != null) {
+            return ResponseEntity.ok(webResponse);
         }
-        int id = userService.createUserDB(userBody);
-        WebResponse resp = new WebResponse(id);
-        System.out.println("Returning ");
-        return ResponseEntity.ok(resp);
+        return ResponseEntity.badRequest().body(webResponse);
     }
 
     @GetMapping(value = "/get-users", produces = MediaType.APPLICATION_JSON_VALUE)

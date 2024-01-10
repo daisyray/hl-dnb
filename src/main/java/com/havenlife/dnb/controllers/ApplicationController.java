@@ -5,19 +5,23 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.havenlife.dnb.database.FileFunctions;
 import com.havenlife.dnb.models.Application;
+import com.havenlife.dnb.models.WebResponse;
+import com.havenlife.dnb.service.ApplicationService;
+import com.havenlife.dnb.service.FMUtils;
 import net.datafaker.Faker;
+import net.datafaker.providers.base.App;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 @RestController
+@RequestMapping("/application")
 public class ApplicationController {
     @Value("${applications.store.file}")
     private String storeFile;
@@ -27,12 +31,47 @@ public class ApplicationController {
 
     @Autowired
     private FileFunctions fileFunctions;
+    @Autowired
+    ApplicationService applicationService;
+    @Autowired
+    private FMUtils fmUtils;
 
     @Autowired
     private ObjectMapper objectMapper;
     public ApplicationController() {
     }
-    @GetMapping(value = "/list-applications", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value="application-step-2", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<WebResponse> applicationStep2 (
+            @RequestParam(value = "userId") Integer userId,
+            @RequestParam(value = "coverageAmount") Integer coverageAmount,
+            @RequestParam(value="coverageYears") Integer coverageYears,
+            @RequestParam(value = "isSmoker") boolean isSmoker,
+            @RequestParam(value = "isSubmitted") boolean isSubmitted,
+            @RequestParam(value = "isCitizen") boolean isCitizen,
+            @RequestParam(value = "salary") Integer salary,
+            @RequestParam(value = "hasDriversLicense") boolean hasLicense,
+            @RequestParam(value = "hasCancer") boolean hasCancer,
+            @RequestParam(value = "profession") String profession)
+    {
+        Application application = new Application();
+        application.setUserId(userId);
+        application.setCoverageAmount(coverageAmount);
+        application.setCoverageYear(coverageYears);
+        application.setSmoker(isSmoker);
+        application.setSubmitted(isSubmitted);
+        application.setCitizen(isCitizen);
+        application.setSalary(salary);
+        application.setHasLicense(hasLicense);
+        application.setProfession(profession);
+        application.setHasCancer(hasCancer);
+        WebResponse webResponse = applicationService.createApplicationDB(application);
+        if(webResponse.getId() != null) {
+            return ResponseEntity.ok(webResponse);
+        }
+        return ResponseEntity.badRequest().body(webResponse);
+    }
+
+    @GetMapping(value = "/", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<Application> application(@RequestParam(value = "rowsLimit", required = false) Integer rowsLimit) {
         List<Application> applications = new ArrayList<>();
         if (rowsLimit == null || rowsLimit < 1) {
@@ -59,7 +98,7 @@ public class ApplicationController {
 
     @GetMapping(value = "/get-application/{applicationId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Application> getApplication(@PathVariable (value = "applicationId") Integer id) throws JsonProcessingException {
-       List<String> allApplicationsFromFile = fileFunctions.readFromFile(storeFile, -1);
+        List<String> allApplicationsFromFile = fileFunctions.readFromFile(storeFile, -1);
 
         for (int i = 0; i < allApplicationsFromFile.size(); i++) {
             Application appObj = objectMapper.readValue(allApplicationsFromFile.get(i), Application.class);

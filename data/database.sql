@@ -7,7 +7,14 @@ create table havenlife.register(
     email varchar(200) not null,
     password varchar(100) not null
 );
-create unique index email_password_unique on havenlife.register (email, password);
+
+create unique index email_unique on havenlife.register (email);
+
+create table havenlife.password_reset(
+    id serial primary key,
+    register_id int not null references havenlife.register(id),
+    created_dt datetime not null default now()
+);
 
 create table havenlife.users(
 	id serial primary key,

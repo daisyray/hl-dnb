@@ -4,8 +4,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.havenlife.dnb.database.FileFunctions;
 import com.havenlife.dnb.models.User;
+import com.havenlife.dnb.models.WebResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
@@ -29,12 +34,18 @@ public class UserService {
     private ObjectMapper objectMapper;
     @Autowired
     private JdbcTemplate jdbcTemplate;
+    @Autowired
+    private NamedParameterJdbcTemplate namedJdbcTemplate;
+    private static final Logger logger = LoggerFactory.getLogger(RegisterService.class);
 
     public List<String> validate(User user) {
         List<String> validationErrors = new ArrayList<>();
         try {
             if ((user.getFirstName() == null) || (user.getFirstName().isBlank())) {
                 validationErrors.add("FirstName is missing");
+            }
+            if ((user.getLastName() == null) || (user.getLastName().isBlank())) {
+                validationErrors.add("LastName is missing");
             }
             if (user.getDateOfBirth() == null) {
                 validationErrors.add("Date is missing");
@@ -50,9 +61,14 @@ public class UserService {
             if (user.getPhoneNumber().length() > 25) {
                 validationErrors.add("Phone number should not be more than 25 characters long");
             }
-
             if (findUserIdForSsn(user.getSsn()) != null) {
                 validationErrors.add("Duplicate SSN");
+            }
+            if ((user.getPhoneNumber() == null) || (user.getPhoneNumber().isBlank())) {
+                validationErrors.add("Phone number is missing");
+            }
+            if ((user.getStateAbbrev() == null) || (user.getStateAbbrev().isBlank())) {
+                validationErrors.add("State is missing");
             }
         } catch (Exception e) {
             validationErrors.add("Validation errors " + e.getMessage());
@@ -187,37 +203,40 @@ public class UserService {
         }
         return null;
     }
-    public Integer createUserDB(User user) {
-        String sql = "insert into havenlife.users (first_name, last_name, register_id, gender, ssn, date_of_birth, address_line1, address_line2, state_abbrev, city, zip, phone_number) values (?, ?, ?, cast(? as havenlife.user_gender), ?, ?, ?, ?, ?, ?, ?, ?)";
-        KeyHolder kh = new GeneratedKeyHolder();
-        System.out.println("Daisy object " + user);
-        jdbcTemplate.update(conn -> {
-            PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-            int i = 1;
-            stmt.setString(i++, user.getFirstName());
-            stmt.setString(i++, user.getLastName());
-            stmt.setInt(i++, user.getRegisterId());
-            stmt.setString(i++, user.getGender());
-            stmt.setString(i++, user.getSsn());
-            stmt.setDate(i++, Date.valueOf(user.getDateOfBirth()));
-            stmt.setString(i++, user.getAddressLine1());
-            stmt.setString(i++, user.getAddressLine2());
-            stmt.setString(i++, user.getStateAbbrev());
-            stmt.setString(i++, user.getCity());
-            stmt.setInt(i++, user.getZip());
-            stmt.setString(i++, user.getPhoneNumber());
-
-            return stmt;
-        }, kh);
-        int id;
-        if (kh.getKeys().size() > 1) {
-            id = (Integer) kh.getKeys().get("id");
-        } else {
-            id = (Integer) kh.getKey();
+    public WebResponse createUserDB(User user) {
+        List<String> errors = validate(user);
+        if (!errors.isEmpty()) {
+            return new WebResponse(errors);
         }
-        return id;
-    }
+        String sql = "insert into havenlife.users (first_name, last_name, register_id, gender, ssn, date_of_birth, address_line1, address_line2, state_abbrev, city, zip, phone_number)" +
+                "values (:firstName, :lastName, :rid, cast(:gender as havenlife.user_gender), :ssn, :dob, :addres1, :addres2, :state, :city, :zip, :phoneNum)";
 
+        try {
+            KeyHolder kh = new GeneratedKeyHolder();
+            MapSqlParameterSource msps = new MapSqlParameterSource();
+            msps.addValue("firstName", user.getFirstName());
+            msps.addValue("lastName", user.getLastName());
+            msps.addValue("rid", user.getRegisterId());
+            msps.addValue("gender", user.getGender());
+            msps.addValue("ssn", user.getSsn());
+            msps.addValue("dob", user.getDateOfBirth());
+            msps.addValue("addres1", user.getAddressLine1());
+            msps.addValue("addres2", user.getAddressLine2());
+            msps.addValue("state", user.getStateAbbrev());
+            msps.addValue("city", user.getCity());
+            msps.addValue("zip", user.getZip());
+            msps.addValue("phoneNum", user.getPhoneNumber());
+
+            namedJdbcTemplate.update(sql, msps, kh, new String[]{"id"});
+            Integer id = kh.getKey().intValue();
+            return new WebResponse(id);
+        } catch (Exception e) {
+            String errorMsg = "Database error";
+            logger.error(errorMsg, e);
+
+            return new WebResponse(errorMsg);
+        }
+    }
     public List<User> readsUsers(Integer numberOfUsersToRead) {
         List<User> allUsersObjs = new ArrayList<>();
         if (numberOfUsersToRead < 1) {
@@ -235,4 +254,3 @@ public class UserService {
         return allUsersObjs;
     }
 }
-// add another variable String orderByColumnName on readUsersFromDB to sort by that column, if nothing give sort by firstname

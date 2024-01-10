@@ -1,5 +1,6 @@
 package com.havenlife.dnb.models;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class WebResponse {
@@ -12,6 +13,10 @@ public class WebResponse {
 
     public WebResponse(List<String> errors) {
         this.errors = errors;
+    }
+    public WebResponse(String error) {
+        this.errors = new ArrayList<>();
+        this.errors.add(error);
     }
 
     public WebResponse() {
